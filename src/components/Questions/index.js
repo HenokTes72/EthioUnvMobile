@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import { orderBy } from 'lodash';
+import io from 'socket.io-client';
 import Question from './Question';
 import { Spinner } from 'native-base';
 import { IP_ADDRESS } from '../../authentication/local';
@@ -18,10 +19,20 @@ class Questions extends Component {
             questions: [],
             isLoading: false,
         }
+
+        this.socket = io(`http://${IP_ADDRESS}`);
     }
 
     componentDidMount() {
         this.getQuestions();
+        this.socket.on('update', message => {
+           console.log("socket update is called");
+           this.getQuestions();
+        })
+    }
+
+    componentWillUnmount() {
+        this.socket.close();
     }
 
     componentWillReceiveProps() {
@@ -50,14 +61,14 @@ class Questions extends Component {
         return (
             <React.Fragment>
                 {
+                    isLoading && <Spinner />
+                }
+                {
                     (SORTS[sortBy](questions)).map(question => (
                         <Question  key={question.id} question={question} />
                     ))
                 }
                 
-                {
-                    isLoading && <Spinner />
-                }
             </React.Fragment>
         )
     }
